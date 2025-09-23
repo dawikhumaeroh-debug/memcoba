@@ -1,0 +1,1447 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portofolio Pribadi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #5c77a3;
+            color: #F0F0F0;
+            overflow-x: hidden;
+        }
+
+        .section-divider {
+            height: 1px;
+            background: linear-gradient(to right, rgba(115, 194, 251, 0) 0%, rgba(115, 194, 251, 0.7) 50%, rgba(115, 194, 251, 0) 100%);
+        }
+
+        .glass-card {
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 50px rgba(0, 0, 0, 0.2);
+        }
+        
+        .animate-pulse-glow {
+            animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        @keyframes pulse-glow {
+            0%, 100% {
+                text-shadow: 0 0 5px rgba(255, 255, 255, 0.5), 0 0 10px rgba(255, 255, 255, 0.2);
+            }
+            50% {
+                text-shadow: 0 0 10px rgba(255, 255, 255, 0.7), 0 0 20px rgba(255, 255, 255, 0.4);
+            }
+        }
+
+        .portfolio-entrance {
+            animation: fadeInUp 1s ease-out forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .page-transition {
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        .fade-out {
+            opacity: 0;
+        }
+
+        .fade-in {
+            opacity: 1;
+        }
+
+        .modal-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        
+        .typing-effect::after {
+            content: '|';
+            animation: blink-caret 0.75s step-end infinite;
+        }
+
+        @keyframes blink-caret {
+            from, to { color: transparent; }
+            50% { color: white; }
+        }
+
+        :root {
+            --bg-start: #1f2937;
+            --bg-end: #111827;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --text-primary: #f3f4f6;
+            --text-secondary: #f3f4f6;
+            --accent-color: #73c2fb;
+            --accent-hover: #b1d9fc;
+            --glow-color: rgba(115, 194, 251, 0.5);
+        }
+
+        .stats-bg-container {
+            background-color: transparent;
+        }
+
+        .tabs-nav {
+            display: flex;
+            gap: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-weight: 500;
+            border-radius: 0.5rem 0.5rem 0 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+            position: relative;
+        }
+        .tab-btn.active {
+            color: var(--text-primary);
+            background: var(--card-bg);
+            border-bottom: 2px solid var(--accent-color);
+            box-shadow: 0 2px 15px -5px var(--glow-color);
+        }
+        .tab-btn:hover:not(.active) {
+            background: rgba(255,255,255,0.03);
+            color: var(--text-primary);
+        }
+
+        .page-content {
+            display: none;
+        }
+        .page-content.active {
+            display: block;
+            animation: fadeInPage 0.6s ease-out;
+        }
+        
+        @keyframes fadeInPage {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-title {
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--border-color);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        p { color: var(--text-secondary); }
+        th, td { border: 1px solid var(--border-color); padding: 0.75rem; text-align: left; }
+        th { background-color: rgba(255, 255, 255, 0.1); font-weight: 600; }
+        
+        .data-table tr {
+            transition: transform 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .data-table tr:hover {
+            transform: translateY(-4px) scale(1.02);
+            background-color: rgba(115, 194, 251, 0.15);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            z-index: 10;
+            position: relative;
+        }
+        @keyframes slideUpFadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .stat-card-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-top: 1rem; }
+        .stat-card { background: var(--card-bg); padding: 1.5rem; border-radius: 1rem; border: 1px solid var(--border-color); transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease; opacity: 0; animation: fadeInUp 0.5s ease-out forwards; }
+        .stat-card:hover { transform: translateY(-8px); box-shadow: 0 0 20px var(--glow-color); border-color: var(--accent-hover); }
+        .grid .stat-card:nth-child(2) { animation-delay: 0.1s; }
+        .grid .stat-card:nth-child(3) { animation-delay: 0.2s; }
+        
+        .stat-card h3, .stat-card h4 { color: var(--text-primary); font-weight: 600; }
+        .stat-card p { color: var(--accent-hover); font-size: 1.2rem; font-weight: 700; }
+        .stat-card i { transition: transform 0.3s ease, color 0.3s ease; }
+        .stat-card:hover i { transform: scale(1.1); color: var(--accent-hover) !important; }
+
+        .chart-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0,0,0,0.2);
+            padding: 1.5rem;
+            border-radius: 1rem;
+            position: relative;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border 0.3s ease;
+            border: 1px solid transparent;
+        }
+        .chart-container:hover {
+            transform: scale(1.05);
+            border: 1px solid var(--glow-color);
+            box-shadow: 0 0 25px rgba(115, 194, 251, 0.2);
+        }
+        .chart-title { text-align: center; font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; color: var(--text-secondary); }
+        
+        .chart-legend {
+            margin-top: 1rem;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+        .legend-color-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .analysis-text { 
+            background-color: rgba(0,0,0,0.2); 
+            padding: 1rem; 
+            border-radius: 0.5rem; 
+            margin-top: 1rem; 
+            border-left: 4px solid var(--accent-color);
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .analysis-text:hover {
+            background-color: rgba(0,0,0,0.3);
+        }
+        .summary-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-out, margin-top 0.5s ease-out, padding-top 0.5s ease-out;
+        }
+        .summary-content.show {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+            max-height: 200px;
+        }
+        .click-prompt {
+            transition: opacity 0.3s ease;
+        }
+
+        @keyframes text-flip { from { transform: translateY(0) scale(1); opacity: 1; } 49% { transform: translateY(10px) scale(0.95); opacity: 0; } 50% { transform: translateY(-10px) scale(0.95); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
+        .text-flipping { animation: text-flip 0.5s ease-in-out; }
+
+        .lang-button {
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            background-color: rgba(255, 255, 255, 0.1);
+            transition: all 0.2s ease;
+        }
+        .lang-button.active, .lang-button:hover {
+            background-color: #73c2fb;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <!-- Layar Selamat Datang -->
+    <div id="welcome-screen" class="absolute inset-0 flex flex-col items-center justify-center bg-transparent z-50 transition-opacity duration-500">
+        <div class="glass-card p-8 md:p-12 text-center transform hover:scale-105 transition-transform duration-300 cursor-pointer" id="welcome-card">
+            <h1 class="text-4xl md:text-6xl font-extrabold text-white tracking-wider animate-pulse-glow" data-lang-key="welcome_title"></h1>
+            <p class="mt-4 text-lg md:text-xl text-white" data-lang-key="welcome_subtitle"></p>
+        </div>
+    </div>
+
+    <!-- Konten Portofolio Utama -->
+    <div id="portfolio-container" class="hidden relative p-4 md:p-10 max-w-6xl w-full mx-auto my-auto page-transition border-2 border-[#73c2fb] rounded-2xl">
+        <div class="absolute top-4 right-4 z-20 flex space-x-2">
+            <button class="lang-button active" data-lang="id">ID</button>
+            <button class="lang-button" data-lang="en">EN</button>
+            <button class="lang-button" data-lang="jv">JV</button>
+        </div>
+        <div class="glass-card relative z-10 p-4 sm:p-6">
+            <header class="flex flex-col md:flex-row items-center md:items-start justify-center text-center md:text-left mb-8">
+                <div class="profile-image-container w-[150px] h-[150px] rounded-full overflow-hidden border-4 border-[#73c2fb] shadow-lg mx-auto md:mx-0 mb-4 md:mb-0 transform hover:scale-105 transition-transform duration-300">
+                    <img src="dawi.PNG" alt="Foto Profil" class="w-full h-full object-cover">
+                </div>
+                <div class="md:ml-8">
+                    <h1 class="text-3xl sm:text-4xl font-bold text-white">Dawi Khumaeroh</h1>
+                    <p class="text-lg text-white mt-1">(ꦢꦮꦶ ꦏ꧀ꦲꦸꦩꦲꦺꦫꦺꦴꦃ)</p>
+                </div>
+            </header>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
+                
+                <!-- Biodata -->
+                <section class="glass-card p-4 sm:p-6 col-span-1 md:col-span-2">
+                    <h2 class="text-xl sm:text-2xl font-semibold mb-4 text-white" data-lang-key="biodata_title"></h2>
+                    <div class="section-divider mb-4"></div>
+                    <ul class="text-sm sm:text-base text-white space-y-2">
+                        <li class="grid grid-cols-[140px_1fr] gap-x-2">
+                            <span class="font-medium" data-lang-key="biodata_name"></span>
+                            <span>:Dawi Khumaeroh</span>
+                        </li>
+                        <li class="grid grid-cols-[140px_1fr] gap-x-2">
+                            <span class="font-medium" data-lang-key="biodata_dob"></span>
+                            <span>:Pekalongan, 30 November 2008</span>
+                        </li>
+                        <li class="grid grid-cols-[140px_1fr] gap-x-2">
+                            <span class="font-medium" data-lang-key="biodata_address"></span>
+                            <span>:Dukuh Puncisan, No 40/64, RT6/RW2, Desa Tangkil Kulon, Kecamatan Kedungwuni, Kabupaten Pekalongan, Jawa Tengah, ID51173</span>
+                        </li>
+                        <li class="grid grid-cols-[140px_1fr] gap-x-2">
+                            <span class="font-medium" data-lang-key="biodata_religion"></span>
+                            <span>:Islam</span>
+                        </li>
+                        <li class="grid grid-cols-[140px_1fr] gap-x-2">
+                            <span class="font-medium" data-lang-key="biodata_gender"></span>
+                            <span>:Perempuan</span>
+                        </li>
+                        <li class="grid grid-cols-[140px_1fr] gap-x-2">
+                            <span class="font-medium" data-lang-key="biodata_nationality"></span>
+                            <span>:Indonesia</span>
+                        </li>
+                    </ul>
+                </section>
+                
+                <!-- Kontak & Ringkasan -->
+                <section class="glass-card p-4 sm:p-6 col-span-1 md:col-span-2">
+                    <h2 class="text-xl sm:text-2xl font-semibold mb-4 text-white" data-lang-key="contact_title"></h2>
+                    <div class="section-divider mb-4"></div>
+                    <ul class="space-y-2 text-white text-sm sm:text-base">
+                        <li>
+                            <span class="inline-block w-16" data-lang-key="contact_email"></span> : dawikhumaeroh@gmail.com
+                        </li>
+                        <li>
+                            <span class="inline-block w-16" data-lang-key="contact_phone"></span> : +62 000-0000-0000
+                        </li>
+                        <li>
+                            <span class="inline-block w-16" data-lang-key="contact_aspirations"></span> : Wanita Karier
+                        </li>
+                    </ul>
+                </section>
+
+                <!-- Pendidikan -->
+                <section class="glass-card p-4 sm:p-6 col-span-1">
+                    <h2 class="text-xl sm:text-2xl font-semibold mb-4 text-white" data-lang-key="education_title"></h2>
+                    <div class="section-divider mb-4"></div>
+                    <ul class="text-sm sm:text-base text-white space-y-2">
+                        <li>
+                            <span class="inline-block w-16" data-lang-key="education_sd"></span> : SD Negeri Tangkil Kulon (2020/2021)
+                        </li>
+                        <li>
+                            <span class="inline-block w-16" data-lang-key="education_smp"></span> : SMP Negeri 1 Buaran (2023/2024)
+                        </li>
+                        <li>
+                            <span class="inline-block w-16" data-lang-key="education_smk"></span> : SMK Ma'arif Nu Tirto
+                        </li>
+                    </ul>
+                </section>
+                
+                <!-- Hobi -->
+                <section class="glass-card p-4 sm:p-6 col-span-1">
+                    <h2 class="text-xl sm:text-2xl font-semibold mb-4 text-white" data-lang-key="hobbies_title"></h2>
+                    <div class="section-divider mb-4"></div>
+                    <p class="text-white leading-relaxed mt-1 text-sm sm:text-base" data-lang-key="hobbies_description"></p>
+                </section>
+                
+                <!-- Motto Hidup & Visi -->
+                <section class="glass-card p-4 sm:p-6 col-span-1 md:col-span-2">
+                    <h2 class="text-xl sm:text-2xl font-semibold mb-4 text-white" data-lang-key="motto_vision_title"></h2>
+                    <div class="section-divider mb-4"></div>
+                    <div class="space-y-4 text-sm sm:text-base text-white">
+                        <div data-modal-type="visi" class="cursor-pointer motivasi-motto-card">
+                            <h3 class="text-lg font-semibold text-white" data-lang-key="vision_card_title"></h3>
+                            <p class="text-white leading-relaxed mt-1"></p>
+                        </div>
+                        <div data-modal-type="motto" class="cursor-pointer motivasi-motto-card">
+                            <h3 class="text-lg font-semibold text-white" data-lang-key="motto_card_title"></h3>
+                            <p class="text-white leading-relaxed mt-1"></p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Proyek Portofolio -->
+                <section class="glass-card p-4 sm:p-6 col-span-1 md:col-span-2">
+                    <h2 class="text-xl sm:text-2xl font-semibold mb-4 text-white" data-lang-key="projects_title"></h2>
+                    <div class="section-divider mb-4"></div>
+                    <div class="flex flex-col items-center justify-center space-y-4">
+                        <div class="glass-card p-4 shadow-inner cursor-pointer project-card w-full max-w-sm" data-project-id="3">
+                            <h3 class="text-lg sm:text-xl font-bold text-center text-white" data-lang-key="project_3_title"></h3>
+                        </div>
+                        <div class="glass-card p-4 shadow-inner cursor-pointer project-card w-full max-w-sm" data-project-id="4">
+                            <h3 class="text-lg sm:text-xl font-bold text-center text-white" data-lang-key="project_4_title"></h3>
+                        </div>
+                        <div class="glass-card p-4 shadow-inner cursor-pointer project-card w-full max-w-sm" data-project-id="5">
+                            <h3 class="text-lg sm:text-xl font-bold text-center text-white" data-lang-key="project_5_title"></h3>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bagian Detail Proyek (Layar Penuh) -->
+    <div id="project-detail-view" class="hidden relative p-4 md:p-10 max-w-6xl w-full mx-auto my-auto page-transition">
+        <button id="back-button" class="absolute top-4 left-4 md:top-10 md:left-10 bg-[#73c2fb]/50 text-white px-4 py-2 rounded-lg font-semibold hover:bg-[#73c2fb]/70 transition-colors duration-300 z-20">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block -mt-0.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span data-lang-key="back_button"></span>
+        </button>
+        <div class="glass-card relative z-10 p-4 sm:p-6 text-center">
+            <div id="project-detail-content"></div>
+        </div>
+    </div>
+    
+    <!-- Modal Pop-up untuk Motto & Visi -->
+    <div id="modal-container" class="modal-container hidden">
+        <div class="glass-card p-6 md:p-8 max-w-xl w-full mx-4 relative">
+            <button id="modal-close-btn" class="absolute top-2 right-2 text-white text-3xl font-bold p-2 leading-none hover:text-[#73c2fb] transition-colors duration-200" data-lang-key="close_button">&times;</button>
+            <h3 id="modal-title" class="text-2xl font-bold mb-4 text-white text-center"></h3>
+            <div class="section-divider mb-4"></div>
+            <p id="modal-description" class="text-white text-center text-base leading-relaxed typing-effect"></p>
+        </div>
+    </div>
+    
+    <script>
+        const translations = {
+            id: {
+                welcome_title: "Selamat Datang",
+                welcome_subtitle: "Sentuh untuk melihat portofolio saya",
+                biodata_title: "Biodata Lengkap",
+                biodata_name: "Nama",
+                biodata_dob: "Tempat & Tgl. Lahir",
+                biodata_address: "Alamat",
+                biodata_religion: "Agama",
+                biodata_gender: "Jenis Kelamin",
+                biodata_nationality: "Kewarganegaraan",
+                contact_title: "Kontak & Ringkasan",
+                contact_email: "Email",
+                contact_phone: "No HP",
+                contact_aspirations: "Cita-cita",
+                education_title: "Pendidikan",
+                education_sd: "SD",
+                education_smp: "SMP",
+                education_smk: "SMK",
+                hobbies_title: "Hobi",
+                hobbies_description: "Saya suka membaca buku fiksi seperti novel, ketika belajar saya suka mendengarkan musik, dan bermain game saat sudah pusing sama tugas.",
+                motto_vision_title: "Motto Hidup & Visi",
+                vision_card_title: "Visi",
+                motto_card_title: "Motto Hidup",
+                projects_title: "Proyek Portofolio",
+                project_3_title: "Menceritakan perjalanan hidup",
+                project_4_title: "Tugas Statistik Matematika",
+                project_5_title: "Dokumentasi Hobi",
+                back_button: "Kembali",
+                close_button: "Tutup",
+                stats_titles: {
+                    ahmad: { title: "Tugas Statistik Pribadi", subtitle: "Analisis Data Aktivitas Mingguan" },
+                    dawi: { title: "Tugas Statistik Pribadi", subtitle: "Analisis Data Aktivitas Mingguan" },
+                    fasa: { title: "Tugas Statistik Pribadi", subtitle: "Analisis Data Aktivitas Mingguan" },
+                },
+                stats_labels: {
+                    raw_data: "Data Mentah",
+                    hobbies_table: "Hobi (Jenis & Frekuensi)",
+                    activities_table: "Aktivitas Rutin",
+                    simple_calcs: "Perhitungan Sederhana",
+                    avg_activities: "Rata-rata Aktivitas",
+                    popular_hobby: "Hobi Populer",
+                    academic_percent: "% Akademik",
+                    achievements_title: "Prestasi",
+                    academic_achievement: "Akademik (Klik)",
+                    non_academic_achievement: "Non-Akademik",
+                    visual_analysis: "Visualisasi & Analisis",
+                    hobby_chart: "Hobi",
+                    activities_chart: "Aktivitas",
+                    academic_chart: "Nilai Akademik",
+                    analysis_title: "Analisis",
+                    detail_summary: "Rangkuman Detail:",
+                    click_for_details: "Klik untuk detail rangkuman...",
+                    per_week: "/ minggu",
+                    times: "kali",
+                }
+            },
+            en: {
+                welcome_title: "Welcome",
+                welcome_subtitle: "Tap to view my portfolio",
+                biodata_title: "Full Biodata",
+                biodata_name: "Name",
+                biodata_dob: "Place & Date of Birth",
+                biodata_address: "Address",
+                biodata_religion: "Religion",
+                biodata_gender: "Gender",
+                biodata_nationality: "Nationality",
+                contact_title: "Contact & Summary",
+                contact_email: "Email",
+                contact_phone: "Phone No.",
+                contact_aspirations: "Aspiration",
+                education_title: "Education",
+                education_sd: "Elementary School",
+                education_smp: "Junior High School",
+                education_smk: "Vocational High School",
+                hobbies_title: "Hobbies",
+                hobbies_description: "I love reading fiction books like novels. When I study, I enjoy listening to music, and I play games when I'm overwhelmed with assignments.",
+                motto_vision_title: "Life Motto & Vision",
+                vision_card_title: "Vision",
+                motto_card_title: "Life Motto",
+                projects_title: "Portfolio Projects",
+                project_3_title: "A Story of My Life's Journey",
+                project_4_title: "Mathematics Statistics Assignment",
+                project_5_title: "Hobbies Documentation",
+                back_button: "Back",
+                close_button: "Close",
+                stats_titles: {
+                    ahmad: { title: "Personal Statistics Assignment", subtitle: "Weekly Activity Data Analysis" },
+                    dawi: { title: "Personal Statistics Assignment", subtitle: "Weekly Activity Data Analysis" },
+                    fasa: { title: "Personal Statistics Assignment", subtitle: "Weekly Activity Data Analysis" },
+                },
+                stats_labels: {
+                    raw_data: "Raw Data",
+                    hobbies_table: "Hobbies (Type & Frequency)",
+                    activities_table: "Routine Activities",
+                    simple_calcs: "Simple Calculations",
+                    avg_activities: "Average Activity",
+                    popular_hobby: "Popular Hobby",
+                    academic_percent: "% Academic",
+                    achievements_title: "Achievements",
+                    academic_achievement: "Academic (Click)",
+                    non_academic_achievement: "Non-Academic",
+                    visual_analysis: "Visualization & Analysis",
+                    hobby_chart: "Hobbies",
+                    activities_chart: "Activities",
+                    academic_chart: "Academic Scores",
+                    analysis_title: "Analysis",
+                    detail_summary: "Detailed Summary:",
+                    click_for_details: "Click for detailed summary...",
+                    per_week: "/ week",
+                    times: "times",
+                }
+            },
+            jv: {
+                welcome_title: "Sugeng Rawuh",
+                welcome_subtitle: "Tutul kagem ningali portofolio kula",
+                biodata_title: "Biodata Jangkep",
+                biodata_name: "Asma",
+                biodata_dob: "Palenggahan & Tanggal Lair",
+                biodata_address: "Alamat",
+                biodata_religion: "Agami",
+                biodata_gender: "Jinising Kelamin",
+                biodata_nationality: "Warganegara",
+                contact_title: "Kontak & Ringkesan",
+                contact_email: "Email",
+                contact_phone: "Nomer HP",
+                contact_aspirations: "Cita-cita",
+                education_title: "Pendhidhikan",
+                education_sd: "SD",
+                education_smp: "SMP",
+                education_smk: "SMK",
+                hobbies_title: "Kagiyatan",
+                hobbies_description: "Kula remen maos buku fiksi kados novel, menawi sinau kula remen midangetaken musik, lan dolanan game menawi sampun pusing kaliyan tugas.",
+                motto_vision_title: "Motto Gesang & Visi",
+                vision_card_title: "Visi",
+                motto_card_title: "Motto Gesang",
+                projects_title: "Proyek Portofolio",
+                project_3_title: "Nyariosaken lampah gesang",
+                project_4_title: "Tugas Statistik Matematika",
+                project_5_title: "Dokumentasi Kagiyatan",
+                back_button: "Bali",
+                close_button: "Tutup",
+                stats_titles: {
+                    ahmad: { title: "Tugas Statistik Pribadi", subtitle: "Analisis Data Kagiyatan Mingguan" },
+                    dawi: { title: "Tugas Statistik Pribadi", subtitle: "Analisis Data Kagiyatan Mingguan" },
+                    fasa: { title: "Tugas Statistik Pribadi", subtitle: "Analisis Data Kagiyatan Mingguan" },
+                },
+                stats_labels: {
+                    raw_data: "Data Mentah",
+                    hobbies_table: "Kagiyatan (Jinising & Frekuensi)",
+                    activities_table: "Kagiyatan Rutin",
+                    simple_calcs: "Pétungan Sederhana",
+                    avg_activities: "Rata-rata Kagiyatan",
+                    popular_hobby: "Kagiyatan Populer",
+                    academic_percent: "% Akademik",
+                    achievements_title: "Prestasi",
+                    academic_achievement: "Akademik (Tutul)",
+                    non_academic_achievement: "Non-Akademik",
+                    visual_analysis: "Visualisasi & Analisis",
+                    hobby_chart: "Kagiyatan",
+                    activities_chart: "Kagiyatan",
+                    academic_chart: "Nilai Akademik",
+                    analysis_title: "Analisis",
+                    detail_summary: "Ringkesan Detail:",
+                    click_for_details: "Tutul kagem detail ringkesan...",
+                    per_week: "/ minggu",
+                    times: "kali",
+                }
+            }
+        };
+
+        const projectData = {
+            id: {
+                3: {
+                    title: 'Menceritakan perjalanan hidup',
+                    is_stats_project: false,
+                    description: 'Nama saya Dawi Khumaeroh biasa dipanggil Dawi tapi orang orang mengenal dawi itu laki laki, padahal saya perempuan. Saya anak perempuan yang lahir pada 30 November 2008 di Pekalongan, Jawa Tengah. Saya adalah anak ketigas dari tiga bersaudara, dari pasangan bapak Basari dan ibu Nafisah. Saat usia 6 tahun, saya bersekolah di SD Negeri Tangkil Kulon, Setelah lulus SD, saya mencoba mendaftar di SMP Negeri 2 Kedungwuni tapi Allah Berkehendak lain saya tidak diterima disit. Akhirnya saya mencoba mendaftar di SMP Negari 1 Buaran dan Alhamdulillah nya ketrima. Selama 3 tahun di SMP saya mendapatkan peringkat 3 besar dikelas, dan menjadi peringkat 6 pararel. Setelah lulus saya coba mendaftar di SMK Negeri 2 Pekalongan di sana saya ketrima tapi kata ibu terlalu jauh dari rumah dan akhirnya saya di rekomendasikan ibu untuk sekolah di SMK Ma’ arif Nu Titro. Disini saya senang mendapatkan teman teman baru. Saa..t ini saya kelas 11, saya pernah mengikuti Kompetisi Sains Ruang Guru. Saya sangat antusias dalam lomba. Saya belajar semampu mungkin, saat perlombaan saya izin pulang duluan dikarenakan lomba nya dirumah saat itu perlombaan pada hari sabtu.Tibanya pengumuman hasil untuk babak selanjutnya saya tidak lolos',
+                    details: []
+                },
+                4: {
+                    title: 'Tugas Statistik Modern',
+                    is_stats_project: true,
+                },
+                5: {
+                    title: 'Dokumentasi Hobi',
+                    is_stats_project: false,
+                    description: `
+                        <div class="flex flex-wrap justify-center items-center gap-4 mb-4">
+                          <img src="hobi1.jpg" alt="Tampilan Aplikasi Kalkulator" class="w-full md:w-1/3 h-auto rounded-lg">
+                          <img src="hobi2.jpg" alt="Contoh Operasi Penjumlahan" class="w-full md:w-1/3 h-auto rounded-lg">
+                        </div>
+                    `,
+                    details: [
+                        'Pada foto pertama merupakan hobi saya sedang mendengarkan musik sambil mengerjakan tugas itu adalah kebiasaan saya.',
+                        'Pada foto kedua tedapat saya sedang main game, saya main game ketika saya sudah pusing memikiran tugas jadi saya butuh hiburan.',
+                    ]
+                }
+            },
+            en: {
+                 3: {
+                    title: 'A Story of My Life\'s Journey',
+                    is_stats_project: false,
+                    description: 'My name is Dawi Khumaeroh, and I am usually called Dawi, but people often think Dawi is a male name, even though I am female. I was born on November 30, 2008, in Pekalongan, Central Java, as the third of three children to my parents, Mr. Basari and Mrs. Nafisah. At the age of 6, I attended SD Negeri Tangkil Kulon. After graduating, I tried to enroll at SMP Negeri 2 Kedungwuni, but God had other plans, and I was not accepted there. So I tried to enroll at SMP Negeri 1 Buaran and, Alhamdulillah, I was accepted. During my 3 years there, I was in the top 3 in my class and ranked 6th overall. After graduating, I tried to enroll at SMK Negeri 2 Pekalongan. I was accepted, but my mother said it was too far from home. Finally, my mother recommended that I go to SMK Ma’arif Nu Tirto. Here, I am happy to have new friends. Currently, I am in 11th grade. I once participated in the Ruang Guru Science Competition. I was very enthusiastic about the competition. I studied as hard as I could. On the day of the competition, I had to ask for permission to go home early because it was held at home on a Saturday. When the results for the next round were announced, I did not pass.',
+                    details: []
+                },
+                4: {
+                    title: 'Mathematics Statistics Assignment',
+                    is_stats_project: true,
+                },
+                5: {
+                    title: 'Hobbies Documentation',
+                    is_stats_project: false,
+                    description: `
+                        <div class="flex flex-wrap justify-center items-center gap-4 mb-4">
+                          <img src="hobi1.jpg" alt="Tampilan Aplikasi Kalkulator" class="w-full md:w-1/3 h-auto rounded-lg">
+                          <img src="hobi2.jpg" alt="Contoh Operasi Penjumlahan" class="w-full md:w-1/3 h-auto rounded-lg">
+                        </div>
+                    `,
+                    details: [
+                        'In the first photo, you can see me listening to music while doing homework. This is one of my habits.',
+                        'In the second photo, you can see me playing games. I play games when I am stressed about my assignments, as I need some entertainment.',
+                    ]
+                }
+            },
+            jv: {
+                3: {
+                    title: 'Nyariosaken lampah gesang',
+                    is_stats_project: false,
+                    description: 'Asma kula Dawi Khumaeroh, limrahipun dipuntimbali Dawi, ananging tiyang-tiyang tepang menawi Dawi menika jaler, kamangka kula punika estri. Kula estri ingkang lair nalika 30 November 2008, ing Pekalongan, Jawa Tengah. Kula punika putra ingkang kaping tiga saking tigang sadherek, saking bapak Basari kaliyan ibu Nafisah. Nalika umur 6 taun, kula mlebet SD Negeri Tangkil Kulon. Sasampunipun tamat SD, kula nyobi ndhaftar ing SMP Negeri 2 Kedungwuni, nanging Gusti Allah gadhah kersa sanès, kula boten katampi ing mriku. Pungkasanipun, kula nyobi ndhaftar ing SMP Negeri 1 Buaran, lan alhamdulillah katampi. Salami 3 taun ing SMP, kula pikantuk rangking 3 ageng ing kelas, lan dados rangking 6 paralel. Sasampunipun tamat, kula nyobi ndhaftar ing SMK Negeri 2 Pekalongan. Kula katampi, ananging ibu ngendika menawi papanipun tebih sanget saking griya, lan pungkasanipun ibu nyaranaken kula kagem sekolah ing SMK Ma’arif Nu Tirto. Ing mriki, kula bingah pikantuk kanca-kanca enggal. Samenika kula kelas 11. Kula sampun nate ndherek Kompetisi Sains Ruang Guru. Kula antusias sanget kaliyan lomba. Kula sinau saé-saénipun. Nalika lomba, kula nyuwun pamit wangsul langkung rumiyin amargi lomba punika wonten ing griya nalika dinten Setu. Nalika wonten pengumuman asil kagem babak salajengipun, kula boten lulus.',
+                    details: []
+                },
+                4: {
+                    title: 'Tugas Statistik Matematika',
+                    is_stats_project: true,
+                },
+                5: {
+                    title: 'Dokumentasi Kagiyatan',
+                    is_stats_project: false,
+                    description: `
+                        <div class="flex flex-wrap justify-center items-center gap-4 mb-4">
+                          <img src="hobi1.jpg" alt="Tampilan Aplikasi Kalkulator" class="w-full md:w-1/3 h-auto rounded-lg">
+                          <img src="hobi2.jpg" alt="Contoh Operasi Penjumlahan" class="w-full md:w-1/3 h-auto rounded-lg">
+                        </div>
+                    `,
+                    details: [
+                        'Ing foto pisanan, menika kagiyatan kula nalika midangetaken musik sinambi ngrampungaken tugas, menika sampun dados pakulinan kula.',
+                        'Ing foto kaping kalih, wonten kula dolanan game, kula dolanan game menawi sampun pusing mikiraken tugas, dados kula mbetahaken hiburan.',
+                    ]
+                }
+            }
+        };
+
+        const mottoDetails = {
+            id: {
+                title: 'Motto Hidup',
+                description: '"jangan belajar dengan takut akan kegagalan, tapi belajarlah bersama harapan dari sebuah keberhasilan."'
+            },
+            en: {
+                title: 'Life Motto',
+                description: '"Don\'t learn with the fear of failure, but learn with the hope of success."'
+            },
+            jv: {
+                title: 'Motto Gesang',
+                description: '"Aja sinau kanthi ajrih saking kegagalan, nanging sinaonana kanthi pangarep-arep saking kasil."'
+            }
+        };
+        
+        const visiDetails = {
+            id: {
+                title: 'Visi',
+                description: '"Menjadi pelajar yang jujur, amanah, dan bertanggung jawab dalam menuntut ilmu."'
+            },
+            en: {
+                title: 'Vision',
+                description: '"To become an honest, trustworthy, and responsible student in the pursuit of knowledge."'
+            },
+            jv: {
+                title: 'Visi',
+                description: '"Dados siswa ingkang jujur, amanah, lan tanggung jawab salebetipun ngudi ngilmu."'
+            }
+        };
+        
+        const dataAhmad = {
+            hobi: [ { name: "Bermain Bola", value: 7 }, { name: "Bermain Basket", value: 3 }, { name: "Work Out", value: 5 } ],
+            aktivitas: [ { name: "Olahraga Pagi", value: 7 }, { name: "Bersih Rumah", value: 7 }, { name: "Sekolah", value: 5 }, { name: "Gym", value: 2 }, { name: "Belajar", value: 7 } ],
+            prestasiAkademik: [ "Ranking 1 di SMP", "Ranking 1 Kelas 10", "Ranking 4 Paralel SMP", "Nilai Sempurna Mapel Inggris", "Nilai Sempurna Mapel IPAS" ],
+            nilaiAkademik: [ { name: "MTK", value: 100 }, { name: "B. Indo", value: 86 }, { name: "B. Ing", value: 100 }, { name: "PAI", value: 90 }, { name: "Sejarah", value: 86 } ],
+            prestasiNonAkademik: ["Anggota Pelajar Penggerak Merah Putih"],
+            prestasiIndex: 0,
+            summaryGenerated: {id: false, en: false, jv: false},
+            analysis: {
+                id: 'Menunjukkan profil yang sangat seimbang antara akademis dan non-akademis. Hobinya didominasi oleh kegiatan fisik seperti bermain bola, yang didukung oleh rutinitas olahraga yang konsisten. Di sisi lain, komitmen belajarnya yang tinggi tercermin dari berbagai prestasi akademiknya.',
+                en: 'Shows a very balanced profile between academic and non-academic pursuits. His hobbies are dominated by physical activities like playing soccer, which is supported by a consistent exercise routine. On the other hand, his high commitment to studying is reflected in his various academic achievements.',
+                jv: 'Nuduhake profil ingkang seimbang sanget antawis akademis lan non-akademis. Kagiyatanipun dipundominasi dening kagiyatan fisik kados dolanan bal, ingkang dipunsengkuyung dening rutinitas olahraga ingkang konsisten. Saking sisih sanes, dedikasi sinau ingkang inggil katingal saking manéka warna prestasi akademisipun.'
+            },
+            summary: {
+                id: (modusHobi, modusAktivitas, achievementText) => `Dedikasinya pada hobi <strong>${modusHobi}</strong> sangat terlihat. Pola aktivitas hariannya sangat terstruktur, dengan <strong>${modusAktivitas}</strong> sebagai kegiatan paling sering dilakukan. ${achievementText}`,
+                en: (modusHobi, modusAktivitas, achievementText) => `His dedication to the hobby of <strong>${modusHobi}</strong> is very evident. His daily activity pattern is highly structured, with <strong>${modusAktivitas}</strong> being the most frequently performed activity. ${achievementText}`,
+                jv: (modusHobi, modusAktivitas, achievementText) => `Dedikasipun dhateng kagiyatan <strong>${modusHobi}</strong> katingal sanget. Pola kagiyatan saben dintenipun terstruktur sanget, kanthi <strong>${modusAktivitas}</strong> minangka kagiyatan ingkang paling asring dipunlampahi. ${achievementText}`
+            }
+        };
+
+        const dataDawi = {
+            hobi: [ { name: "Main Game", value: 4 }, { name: "Membaca Buku", value: 3 }, { name: "Dengar Musik", value: 6 } ],
+            aktivitas: [ { name: "Makan", value: 15 }, { name: "Minum", value: 15 }, { name: "Belajar", value: 7 }, { name: "Mandi", value: 14 } ],
+            prestasiAkademik: [ "Ranking 6 Pararel di SMP", "Nilai 100 Matematika di SMP", "Bahasa Arab = 88" ],
+            nilaiAkademik: [ { name: "MTK", value: 100 }, { name: "B. Arab", value: 95 }, { name: "B. Ing", value: 88 }, { name: "Fiqih", value: 86 }, { name: "Sejarah", value: 90 } ],
+            prestasiNonAkademik: [],
+            prestasiIndex: 0,
+            summaryGenerated: {id: false, en: false, jv: false},
+            analysis: {
+                id: 'Profilnya menunjukkan kecenderungan kuat pada hobi yang bersifat santai dan personal, seperti mendengarkan musik. Rutinitasnya didominasi oleh kegiatan pemenuhan kebutuhan dasar dengan frekuensi sangat tinggi, yang mengindikasikan pola hidup yang teratur. Prestasinya terfokus pada bidang akademik.',
+                en: 'Her profile shows a strong inclination towards relaxed and personal hobbies, such as listening to music. Her routine is dominated by basic needs with very high frequency, which indicates a regular lifestyle. Her achievements are focused on the academic field.',
+                jv: 'Profilipun nuduhake kecenderungan ingkang kiyat dhateng kagiyatan ingkang sipatipun santai lan pribadi, kados midangetaken musik. Rutinitasipun dipundominasi dening kagiyatan penuhan kabutuhan dhasar kanthi frekuensi inggil sanget, ingkang nuduhake pola gesang ingkang teratur. Prestasiipun fokus dhateng bidang akademik.'
+            },
+            summary: {
+                id: (modusHobi, modusAktivitas, achievementText) => `Dedikasinya pada hobi <strong>${modusHobi}</strong> sangat terlihat. Pola aktivitas hariannya sangat terstruktur, dengan <strong>${modusAktivitas}</strong> sebagai kegiatan paling sering dilakukan. ${achievementText}`,
+                en: (modusHobi, modusAktivitas, achievementText) => `Her dedication to the hobby of <strong>${modusHobi}</strong> is very evident. Her daily activity pattern is highly structured, with <strong>${modusAktivitas}</strong> being the most frequently performed activity. ${achievementText}`,
+                jv: (modusHobi, modusAktivitas, achievementText) => `Dedikasipun dhateng kagiyatan <strong>${modusHobi}</strong> katingal sanget. Pola kagiyatan saben dintenipun terstruktur sanget, kanthi <strong>${modusAktivitas}</strong> minangka kagiyatan ingkang paling asring dipunlampahi. ${achievementText}`
+            }
+        };
+
+        const dataFasa = {
+            hobi: [ { name: "Main Voli", value: 2 }, { name: "Game", value: 4 }, { name: "Memasak", value: 3 } ],
+            aktivitas: [ { name: "Makan", value: 14 }, { name: "Minum", value: 8 }, { name: "Mandi", value: 14 }, { name: "Belajar", value: 5 } ],
+            prestasiAkademik: [ "Ranking 6" ],
+            nilaiAkademik: [ { name: "Kimia", value: 98 }, { name: "Seni Rupa", value: 94 }, { name: "Biologi", value: 90 } ],
+            prestasiNonAkademik: [],
+            prestasiIndex: 0,
+            summaryGenerated: {id: false, en: false, jv: false},
+            analysis: {
+                id: 'Menunjukkan minat pada hobi yang bervariasi, mulai dari game hingga aktivitas fisik seperti voli. Rutinitas hariannya sangat didominasi oleh kegiatan dasar seperti makan dan mandi. Meskipun porsi waktu untuk belajar terlihat lebih sedikit, ia tetap mampu menunjukkan pencapaian akademis yang baik.',
+                en: 'Shows interest in various hobbies, from gaming to physical activities like volleyball. His daily routine is dominated by basic activities like eating and bathing. Although his study time seems to be less, he is still able to show good academic achievements.',
+                jv: 'Nuduhake minat dhateng kagiyatan ingkang warni-warni, saking game dumugi kagiyatan fisik kados voli. Rutinitas saben dintenipun dipundominasi dening kagiyatan dhasar kados dhahar lan siram. Sanadyan porsi wekdal kagem sinau katingal langkung sakedhik, piyambakipun tetep saged nuduhake prestasi akademis ingkang saé.'
+            },
+            summary: {
+                id: (modusHobi, modusAktivitas, achievementText) => `Dedikasinya pada hobi <strong>${modusHobi}</strong> sangat terlihat. Pola aktivitas hariannya sangat terstruktur, dengan <strong>${modusAktivitas}</strong> sebagai kegiatan paling sering dilakukan. ${achievementText}`,
+                en: (modusHobi, modusAktivitas, achievementText) => `His dedication to the hobby of <strong>${modusHobi}</strong> is very evident. His daily activity pattern is highly structured, with <strong>${modusAktivitas}</strong> being the most frequently performed activity. ${achievementText}`,
+                jv: (modusHobi, modusAktivitas, achievementText) => `Dedikasipun dhateng kagiyatan <strong>${modusHobi}</strong> katingal sanget. Pola kagiyatan saben dintenipun terstruktur sanget, kanthi <strong>${modusAktivitas}</strong> minangka kagiyatan ingkang paling asring dipunlampahi. ${achievementText}`
+            }
+        };
+
+        let currentLang = 'id';
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const welcomeCard = document.getElementById('welcome-card');
+        const portfolioContainer = document.getElementById('portfolio-container');
+        const projectDetailView = document.getElementById('project-detail-view');
+        const backButton = document.getElementById('back-button');
+        const projectCards = document.querySelectorAll('.project-card');
+        const motivasiMottoCards = document.querySelectorAll('.motivasi-motto-card');
+        const projectDetailContent = document.getElementById('project-detail-content');
+        const langButtons = document.querySelectorAll('.lang-button');
+        const modalContainer = document.getElementById('modal-container');
+        const modalTitle = document.getElementById('modal-title');
+        const modalDescription = document.getElementById('modal-description');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+
+        function updateLanguage(lang) {
+            currentLang = lang;
+            document.querySelectorAll('[data-lang-key]').forEach(el => {
+                const key = el.dataset.langKey;
+                if (translations[lang] && translations[lang][key]) {
+                    el.textContent = translations[lang][key];
+                }
+            });
+            // Update the back button span
+            document.querySelector('#back-button span').textContent = translations[lang]['back_button'];
+        }
+
+        langButtons.forEach(button => {
+            button.addEventListener('click', (event) => {
+                const newLang = event.currentTarget.dataset.lang;
+                langButtons.forEach(btn => btn.classList.remove('active'));
+                event.currentTarget.classList.add('active');
+                updateLanguage(newLang);
+                if (!portfolioContainer.classList.contains('hidden')) {
+                    const activeTab = document.querySelector('.tab-btn.active');
+                    if (activeTab) {
+                        const pageId = activeTab.getAttribute('onclick').match(/'([^']+)'/)[1];
+                        showStatsPage(pageId);
+                    }
+                }
+            });
+        });
+
+        welcomeCard.addEventListener('click', () => {
+            welcomeScreen.style.opacity = '0';
+            welcomeScreen.style.pointerEvents = 'none';
+            setTimeout(() => {
+                portfolioContainer.classList.remove('hidden');
+                portfolioContainer.classList.add('portfolio-entrance');
+            }, 500);
+        });
+
+        function showProjectDetail(id) {
+            const project = projectData[currentLang][id];
+            if (project.is_stats_project) {
+                projectDetailContent.innerHTML = createStatsContent(currentLang);
+                setupStatisticsApp();
+            } else {
+                const detailsHtml = project.details.map(detail => `<li>${detail}</li>`).join('');
+                const contentHtml = `
+                    <h3 class="text-xl sm:text-3xl font-bold mb-4 text-white">${project.title}</h3>
+                    <div class="section-divider w-full mb-6"></div>
+                    <p class="text-white mb-6 text-center text-sm sm:text-base leading-relaxed">
+                        ${project.description}
+                    </p>
+                    <h4 class="text-lg font-semibold text-white mb-2" data-lang-key="project_details_title">${translations[currentLang].stats_labels.detail_summary}</h4>
+                    <ul class="list-disc list-inside mt-4 text-white w-full text-left text-sm sm:text-base mx-auto max-w-lg">
+                        ${detailsHtml}
+                    </ul>
+                `;
+                projectDetailContent.innerHTML = contentHtml;
+                document.querySelectorAll('#project-detail-view [data-lang-key]').forEach(el => {
+                    const key = el.dataset.langKey;
+                    if (translations[currentLang].stats_labels[key]) {
+                        el.textContent = translations[currentLang].stats_labels[key];
+                    }
+                });
+            }
+            portfolioContainer.classList.add('fade-out');
+            setTimeout(() => {
+                portfolioContainer.classList.add('hidden');
+                projectDetailView.classList.remove('hidden');
+                projectDetailView.classList.add('fade-in');
+            }, 500);
+        }
+        
+        function typeEffect(element, text, speed) {
+            element.innerHTML = '';
+            let i = 0;
+            const timer = setInterval(() => {
+                if (i < text.length) {
+                    element.innerHTML += text.charAt(i);
+                    i++;
+                } else {
+                    clearInterval(timer);
+                    element.classList.remove('typing-effect');
+                }
+            }, speed);
+        }
+
+        function showModal(data) {
+            modalTitle.textContent = data[currentLang].title;
+            modalDescription.classList.add('typing-effect');
+            typeEffect(modalDescription, data[currentLang].description, 25);
+            modalContainer.classList.remove('hidden');
+        }
+
+        projectCards.forEach(card => {
+            card.addEventListener('click', (event) => {
+                const projectId = event.currentTarget.dataset.projectId;
+                showProjectDetail(projectId);
+            });
+        });
+
+        motivasiMottoCards.forEach(card => {
+            card.addEventListener('click', (event) => {
+                const modalType = event.currentTarget.dataset.modalType;
+                if (modalType === 'visi') {
+                    showModal(visiDetails);
+                } else if (modalType === 'motto') {
+                    showModal(mottoDetails);
+                }
+            });
+        });
+        
+        backButton.addEventListener('click', () => {
+            projectDetailView.classList.remove('fade-in');
+            projectDetailView.classList.add('fade-out');
+            setTimeout(() => {
+                projectDetailView.classList.add('hidden');
+                portfolioContainer.classList.remove('hidden');
+                portfolioContainer.classList.remove('fade-out');
+                portfolioContainer.classList.add('fade-in');
+            }, 500);
+        });
+        
+        modalCloseBtn.addEventListener('click', () => {
+            modalContainer.classList.add('hidden');
+        });
+        
+        modalContainer.addEventListener('click', (event) => {
+            if (event.target === modalContainer) {
+                modalContainer.classList.add('hidden');
+            }
+        });
+
+        function createStatsContent(lang) {
+            const labels = translations[lang].stats_labels;
+            const titles = translations[lang].stats_titles;
+
+            return `
+                <div class="container p-4">
+                    <nav class="tabs-nav">
+                        <button class="tab-btn active" onclick="showStatsPage('page-ahmad')">Ahmad S. Khoil</button>
+                        <button class="tab-btn" onclick="showStatsPage('page-dawi')">Dawi Khumaeroh</button>
+                        <button class="tab-btn" onclick="showStatsPage('page-fasa')">Fasa A. Ninjat</button>
+                    </nav>
+                    <div id="page-ahmad" class="page-content active glass-card p-6">
+                        <header class="mb-12">
+                            <div class="text-left mb-8">
+                                <div><p class="text-sm text-secondary">Nama</p><p class="font-semibold text-primary">Ahmad Sabilul Khoil</p></div>
+                                <div class="mt-2"><p class="text-sm text-secondary">No. Absen</p><p class="font-semibold text-primary">02</p></div>
+                                <div class="mt-2"><p class="text-sm text-secondary">Kelas</p><p class="font-semibold text-primary">XI TJK 2</p></div>
+                            </div>
+                            <div class="text-center">
+                                <h1 class="text-4xl font-bold">${titles.ahmad.title}</h1>
+                                <p class="text-gray-400 mt-2">${titles.ahmad.subtitle}</p>
+                            </div>
+                        </header>
+                        <div class="grid lg:grid-cols-2 gap-8">
+                            <div>
+                                <h3 class="text-xl font-medium mb-4">${labels.raw_data}</h3>
+                                <div class="space-y-6">
+                                    <div>
+                                        <h4>${labels.hobbies_table}</h4>
+                                        <table class="w-full mt-2 data-table"><thead><tr><th>${labels.hobbies_table.split(' ')[0]}</th><th>${labels.hobbies_table.split(' ')[2].replace('(','')}}</th></tr></thead><tbody id="hobi-table-ahmad"></tbody></table>
+                                    </div>
+                                    <div>
+                                        <h4>${labels.activities_table}</h4>
+                                        <table class="w-full mt-2 data-table"><thead><tr><th>${labels.activities_table.split(' ')[0]}</th><th>${labels.activities_table.split(' ')[1]}</th></tr></thead><tbody id="aktivitas-table-ahmad"></tbody></table>
+                                    </div>
+                                </div>
+                                <h3 class="text-xl font-medium mb-4 mt-8">${labels.simple_calcs}</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div class="stat-card p-4"><i class="fa-solid fa-calculator text-2xl text-green-400 mb-2"></i><h4>${labels.avg_activities}</h4><p id="avg-aktivitas-ahmad" class="text-base text-secondary mt-1"></p></div>
+                                    <div class="stat-card p-4"><i class="fa-solid fa-star text-2xl text-yellow-400 mb-2"></i><h4>${labels.popular_hobby}</h4><p id="modus-hobi-ahmad" class="text-base text-secondary mt-1"></p></div>
+                                    <div class="stat-card p-4"><i class="fa-solid fa-chart-pie text-2xl text-blue-400 mb-2"></i><h4>${labels.academic_percent}</h4><p id="persen-akademik-ahmad" class="text-base text-secondary mt-1"></p></div>
+                                </div>
+                                <h3 class="text-xl font-medium mb-4 mt-8">${labels.achievements_title}</h3>
+                                <div class="grid md:grid-cols-2 gap-4">
+                                    <div id="academic-card-ahmad" class="stat-card p-4 cursor-pointer">
+                                        <i class="fa-solid fa-graduation-cap text-2xl text-accent-color mb-2"></i><h4>${labels.academic_achievement}</h4>
+                                        <p id="academic-achievement-ahmad" class="text-base text-secondary mt-1 leading-snug"></p>
+                                    </div>
+                                    <div class="stat-card p-4">
+                                        <i class="fa-solid fa-trophy text-2xl text-yellow-400 mb-2"></i><h4>${labels.non_academic_achievement}</h4>
+                                        <p id="non-academic-achievement-ahmad" class="text-base text-secondary mt-1 leading-snug"></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-medium mb-4">${labels.visual_analysis}</h3>
+                                <div class="space-y-6">
+                                    <div class="chart-container">
+                                        <h3 class="chart-title">${labels.hobby_chart}</h3>
+                                        <div id="pie-chart-ahmad"></div>
+                                        <div id="pie-legend-ahmad" class="chart-legend"></div>
+                                    </div>
+                                    <div class="chart-container">
+                                        <h3 class="chart-title">${labels.activities_chart}</h3>
+                                        <div id="bar-chart-ahmad"></div>
+                                    </div>
+                                    <div class="chart-container">
+                                        <h3 class="chart-title">${labels.academic_chart}</h3>
+                                        <div id="prestasi-chart-ahmad"></div>
+                                    </div>
+                                </div>
+                                <div id="analysis-container-ahmad" class="analysis-text mt-6">
+                                    <p><strong>${labels.analysis_title} Sabil:</strong> ${dataAhmad.analysis[currentLang]}</p>
+                                    <div id="summary-ahmad" class="summary-content"></div>
+                                    <p id="prompt-ahmad" class="click-prompt mt-2 text-xs text-accent-color"><em>${labels.click_for_details}</em></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="page-dawi" class="page-content glass-card p-6">
+                        <header class="mb-12">
+                            <div class="text-left mb-8">
+                                <div><p class="text-sm text-secondary">Nama</p><p class="font-semibold text-primary">Dawi Khumaeroh</p></div>
+                                <div class="mt-2"><p class="text-sm text-secondary">No. Absen</p><p class="font-semibold text-primary">05</p></div>
+                                <div class="mt-2"><p class="text-sm text-secondary">Kelas</p><p class="font-semibold text-primary">XI TJK 2</p></div>
+                            </div>
+                            <div class="text-center">
+                                <h1 class="text-4xl font-bold">${titles.dawi.title}</h1>
+                                <p class="text-gray-400 mt-2">${titles.dawi.subtitle}</p>
+                            </div>
+                        </header>
+                        <div class="grid lg:grid-cols-2 gap-8">
+                            <div>
+                                <h3 class="text-xl font-medium mb-4">${labels.raw_data}</h3>
+                                <div class="space-y-6">
+                                    <div>
+                                        <h4>${labels.hobbies_table}</h4>
+                                        <table class="w-full mt-2 data-table"><thead><tr><th>${labels.hobbies_table.split(' ')[0]}</th><th>${labels.hobbies_table.split(' ')[2].replace('(','')}}</th></tr></thead><tbody id="hobi-table-dawi"></tbody></table>
+                                    </div>
+                                    <div>
+                                        <h4>${labels.activities_table}</h4>
+                                        <table class="w-full mt-2 data-table"><thead><tr><th>${labels.activities_table.split(' ')[0]}</th><th>${labels.activities_table.split(' ')[1]}</th></tr></thead><tbody id="aktivitas-table-dawi"></tbody></table>
+                                    </div>
+                                </div>
+                                <h3 class="text-xl font-medium mb-4 mt-8">${labels.simple_calcs}</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div class="stat-card p-4"><i class="fa-solid fa-calculator text-2xl text-green-400 mb-2"></i><h4>${labels.avg_activities}</h4><p id="avg-aktivitas-dawi" class="text-base text-secondary mt-1"></p></div>
+                                    <div class="stat-card p-4"><i class="fa-solid fa-star text-2xl text-yellow-400 mb-2"></i><h4>${labels.popular_hobby}</h4><p id="modus-hobi-dawi" class="text-base text-secondary mt-1"></p></div>
+                                    <div class="stat-card p-4"><i class="fa-solid fa-chart-pie text-2xl text-blue-400 mb-2"></i><h4>${labels.academic_percent}</h4><p id="persen-akademik-dawi" class="text-base text-secondary mt-1"></p></div>
+                                </div>
+                                <h3 class="text-xl font-medium mb-4 mt-8">${labels.achievements_title}</h3>
+                                <div class="grid md:grid-cols-2 gap-4">
+                                    <div id="academic-card-dawi" class="stat-card p-4 cursor-pointer">
+                                        <i class="fa-solid fa-graduation-cap text-2xl text-accent-color mb-2"></i><h4>${labels.academic_achievement}</h4>
+                                        <p id="academic-achievement-dawi" class="text-base text-secondary mt-1"></p>
+                                    </div>
+                                    <div class="stat-card p-4">
+                                        <i class="fa-solid fa-trophy text-2xl text-yellow-400 mb-2"></i><h4>${labels.non_academic_achievement}</h4>
+                                        <p id="non-academic-achievement-dawi" class="text-base text-secondary mt-1"></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-medium mb-4">${labels.visual_analysis}</h3>
+                                <div class="space-y-6">
+                                    <div class="chart-container">
+                                        <h3 class="chart-title">${labels.hobby_chart}</h3>
+                                        <div id="pie-chart-dawi"></div>
+                                        <div id="pie-legend-dawi" class="chart-legend"></div>
+                                    </div>
+                                    <div class="chart-container">
+                                        <h3 class="chart-title">${labels.activities_chart}</h3>
+                                        <div id="bar-chart-dawi"></div>
+                                    </div>
+                                    <div class="chart-container">
+                                        <h3 class="chart-title">${labels.academic_chart}</h3>
+                                        <div id="prestasi-chart-dawi"></div>
+                                    </div>
+                                </div>
+                                <div id="analysis-container-dawi" class="analysis-text mt-6">
+                                    <p><strong>${labels.analysis_title} Dawi:</strong> ${dataDawi.analysis[currentLang]}</p>
+                                    <div id="summary-dawi" class="summary-content"></div>
+                                    <p id="prompt-dawi" class="click-prompt mt-2 text-xs text-accent-color"><em>${labels.click_for_details}</em></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="page-fasa" class="page-content glass-card p-6">
+                        <header class="mb-12">
+                            <div class="text-left mb-8">
+                                <div><p class="text-sm text-secondary">Nama</p><p class="font-semibold text-primary">Fasa Akhamdin Ninjat</p></div>
+                                <div class="mt-2"><p class="text-sm text-secondary">No. Absen</p><p class="font-semibold text-primary">08</p></div>
+                                <div class="mt-2"><p class="text-sm text-secondary">Kelas</p><p class="font-semibold text-primary">XI TJK 2</p></div>
+                            </div>
+                            <div class="text-center">
+                                <h1 class="text-4xl font-bold">${titles.fasa.title}</h1>
+                                <p class="text-gray-400 mt-2">${titles.fasa.subtitle}</p>
+                            </div>
+                        </header>
+                        <div class="grid lg:grid-cols-2 gap-8">
+                            <div>
+                                <h3 class="text-xl font-medium mb-4">${labels.raw_data}</h3>
+                                <div class="space-y-6">
+                                    <div>
+                                        <h4>${labels.hobbies_table}</h4>
+                                        <table class="w-full mt-2 data-table"><thead><tr><th>${labels.hobbies_table.split(' ')[0]}</th><th>${labels.hobbies_table.split(' ')[2].replace('(','')}}</th></tr></thead><tbody id="hobi-table-fasa"></tbody></table>
+                                    </div>
+                                    <div>
+                                        <h4>${labels.activities_table}</h4>
+                                        <table class="w-full mt-2 data-table"><thead><tr><th>${labels.activities_table.split(' ')[0]}</th><th>${labels.activities_table.split(' ')[1]}</th></tr></thead><tbody id="aktivitas-table-fasa"></tbody></table>
+                                    </div>
+                                </div>
+                                <h3 class="text-xl font-medium mb-4 mt-8">${labels.simple_calcs}</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div class="stat-card p-4"><i class="fa-solid fa-calculator text-2xl text-green-400 mb-2"></i><h4>${labels.avg_activities}</h4><p id="avg-aktivitas-fasa" class="text-base text-secondary mt-1"></p></div>
+                                    <div class="stat-card p-4"><i class="fa-solid fa-star text-2xl text-yellow-400 mb-2"></i><h4>${labels.popular_hobby}</h4><p id="modus-hobi-fasa" class="text-base text-secondary mt-1"></p></div>
+                                    <div class="stat-card p-4"><i class="fa-solid fa-chart-pie text-2xl text-blue-400 mb-2"></i><h4>${labels.academic_percent}</h4><p id="persen-akademik-fasa" class="text-base text-secondary mt-1"></p></div>
+                                </div>
+                                <h3 class="text-xl font-medium mb-4 mt-8">${labels.achievements_title}</h3>
+                                <div class="grid md:grid-cols-2 gap-4">
+                                    <div id="academic-card-fasa" class="stat-card p-4 cursor-pointer">
+                                        <i class="fa-solid fa-graduation-cap text-2xl text-accent-color mb-2"></i><h4>${labels.academic_achievement}</h4>
+                                        <p id="academic-achievement-fasa" class="text-base text-secondary mt-1"></p>
+                                    </div>
+                                    <div class="stat-card p-4">
+                                        <i class="fa-solid fa-trophy text-2xl text-yellow-400 mb-2"></i><h4>${labels.non_academic_achievement}</h4>
+                                        <p id="non-academic-achievement-fasa" class="text-base text-secondary mt-1"></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-medium mb-4">${labels.visual_analysis}</h3>
+                                <div class="space-y-6">
+                                    <div class="chart-container">
+                                        <h3 class="chart-title">${labels.hobby_chart}</h3>
+                                        <div id="pie-chart-fasa"></div>
+                                    </div>
+                                    <div class="chart-container">
+                                        <h3 class="chart-title">${labels.activities_chart}</h3>
+                                        <div id="bar-chart-fasa"></div>
+                                    </div>
+                                    <div class="chart-container">
+                                        <h3 class="chart-title">${labels.academic_chart}</h3>
+                                        <div id="prestasi-chart-fasa"></div>
+                                    </div>
+                                </div>
+                                <div id="analysis-container-fasa" class="analysis-text mt-6">
+                                    <p><strong>${labels.analysis_title} Fasa:</strong> ${dataFasa.analysis[currentLang]}</p>
+                                    <div id="summary-fasa" class="summary-content"></div>
+                                    <p id="prompt-fasa" class="click-prompt mt-2 text-xs text-accent-color"><em>${labels.click_for_details}</em></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showStatsPage(pageId) {
+            document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            const targetPage = document.getElementById(pageId);
+            if(targetPage) {
+                targetPage.classList.add('active');
+            }
+            const targetButton = document.querySelector(`.tab-btn[onclick="showStatsPage('${pageId}')"]`);
+            if(targetButton) {
+                targetButton.classList.add('active');
+            }
+        }
+        
+        function calculateAndDisplayStats(data, ids) {
+            const labels = translations[currentLang].stats_labels;
+            const totalAktivitas = data.aktivitas.reduce((sum, item) => sum + item.value, 0);
+            const avgAktivitas = totalAktivitas / data.aktivitas.length;
+            document.getElementById(ids.avgAktivitas).textContent = `${avgAktivitas.toFixed(1)} ${labels.per_week}`;
+            const modusHobi = data.hobi.reduce((prev, current) => (prev.value > current.value) ? prev : current);
+            document.getElementById(ids.modusHobi).textContent = modusHobi.name;
+            const totalPrestasi = data.prestasiAkademik.length + data.prestasiNonAkademik.length;
+            const persenAkademik = totalPrestasi > 0 ? (data.prestasiAkademik.length / totalPrestasi) * 100 : 0;
+            document.getElementById(ids.persenAkademik).textContent = `${persenAkademik.toFixed(0)}%`;
+            if (ids.nonAcademic) {
+                 const nonAcademicText = data.prestasiNonAkademik.length > 0 ? data.prestasiNonAkademik.join(', ') : '-';
+                 document.getElementById(ids.nonAcademic).textContent = nonAcademicText;
+            }
+        }
+        
+        function setupAnalysisToggle(containerId, summaryId, promptId, data) {
+            const container = document.getElementById(containerId);
+            const summaryDiv = document.getElementById(summaryId);
+            const prompt = document.getElementById(promptId);
+            if (!container || !summaryDiv || !prompt) return;
+            container.addEventListener('click', () => {
+                if (!data.summaryGenerated[currentLang]) {
+                    const modusHobi = data.hobi.reduce((prev, current) => (prev.value > current.value) ? prev : current);
+                    const maxAktivitasValue = Math.max(...data.aktivitas.map(item => item.value));
+                    const modusAktivitas = data.aktivitas
+                        .filter(item => item.value === maxAktivitasValue)
+                        .map(item => item.name)
+                        .join(', ');
+                    const firstAcademic = data.prestasiAkademik[0] || 'prestasi akademis';
+                    let achievementText;
+                    if(data.prestasiNonAkademik.length > 0) {
+                        const firstNonAcademic = data.prestasiNonAkademik[0];
+                        const tempText = {
+                            id: `Keseimbangan ini tercermin dari prestasinya, baik di bidang akademis seperti <strong>${firstAcademic}</strong>, maupun non-akademis sebagai <strong>${firstNonAcademic}</strong>.`,
+                            en: `This balance is reflected in his achievements, both in the academic field like <strong>${firstAcademic}</strong>, and non-academically as a <strong>${firstNonAcademic}</strong>.`,
+                            jv: `Keseimbangan menika katingal saking prestasiipun, sae ing bidang akademis kados <strong>${firstAcademic}</strong>, ugi non-akademis minangka <strong>${firstNonAcademic}</strong>.`
+                        };
+                        achievementText = tempText[currentLang];
+                    } else {
+                        const tempText = {
+                            id: `Fokus utamanya tercermin pada prestasi akademisnya, seperti <strong>${firstAcademic}</strong>.`,
+                            en: `His main focus is reflected in his academic achievements, such as <strong>${firstAcademic}</strong>.`,
+                            jv: `Fokus utamiipun katingal saking prestasi akademisipun, kados <strong>${firstAcademic}</strong>.`
+                        };
+                        achievementText = tempText[currentLang];
+                    }
+                    summaryDiv.innerHTML = `
+                        <p class="text-sm text-primary font-semibold">${translations[currentLang].stats_labels.detail_summary}</p>
+                        <p class="text-sm mt-2">
+                            ${data.summary[currentLang](modusHobi.name, modusAktivitas, achievementText)}
+                        </p>
+                    `;
+                    data.summaryGenerated[currentLang] = true;
+                }
+                summaryDiv.classList.toggle('show');
+                prompt.style.opacity = '0';
+            });
+        }
+
+        function setupInteractiveCard(cardId, textId, dataObject) {
+            const card = document.getElementById(cardId);
+            const text = document.getElementById(textId);
+            if (card && text) {
+                text.textContent = dataObject.prestasiAkademik[dataObject.prestasiIndex] || 'Data not available';
+                card.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (dataObject.prestasiAkademik.length > 0) {
+                        dataObject.prestasiIndex = (dataObject.prestasiIndex + 1) % dataObject.prestasiAkademik.length;
+                        text.classList.remove('text-flipping');
+                        void text.offsetWidth;
+                        text.classList.add('text-flipping');
+                        text.textContent = dataObject.prestasiAkademik[dataObject.prestasiIndex];
+                    }
+                });
+            }
+        }
+        
+        function createPieChart(data, chartElementId, legendElementId) { 
+            const chartDiv = document.querySelector(chartElementId);
+            if (!chartDiv) return;
+            chartDiv.innerHTML = ""; 
+            const w=250, h=250, m=20, r=Math.min(w,h)/2-m; 
+            const svg=d3.select(chartElementId).append("svg")
+                .attr("width",w).attr("height",h)
+                .append("g").attr("transform",`translate(${w/2},${h/2})`); 
+            const total = d3.sum(data, d => d.value);
+            const color=d3.scaleOrdinal().domain(data.map(d=>d.name)).range(["#73c2fb","#ff8c00","#10b981", "#ffc0cb", "#9333ea"]); 
+            const pie=d3.pie().value(d=>d.value).sort(null); 
+            const arc=d3.arc().innerRadius(r * 0.5).outerRadius(r); 
+            const hArc=d3.arc().innerRadius(r * 0.5).outerRadius(r + 10); 
+            const arcs=svg.selectAll(".arc").data(pie(data)).enter().append("g").attr("class","arc"); 
+            arcs.append("path").attr("fill",d=>color(d.data.name))
+                .style("stroke","#111827")
+                .style("stroke-width","3px")
+                .style("transition", "opacity 0.3s ease")
+                .each(function(d) { this._current = d; })
+                .transition().duration(1000)
+                .attrTween("d", function(d) {
+                    const i = d3.interpolate(this._current, d);
+                    this._current = i(0);
+                    return function(t) { return arc(i(t)); };
+                });
+            arcs.append("title").text(d=>`${d.data.name}: ${d.data.value}`); 
+            const centerText = svg.append("text").attr("text-anchor", "middle").attr("dy", "0.35em").style("fill", "var(--text-primary)").style("font-size", "1.5rem").style("font-weight", "bold").style("opacity", 0).text(total);
+            const centerSubText = svg.append("text").attr("text-anchor", "middle").attr("dy", "1.5em").style("fill", "var(--text-secondary)").style("font-size", "0.9rem").style("opacity", 0).text("Total");
+            setTimeout(() => {
+                centerText.transition().duration(500).style("opacity", 1);
+                centerSubText.transition().duration(500).style("opacity", 1);
+            }, 1000);
+            arcs.on("mouseover",function(e,d){
+                d3.select(this).select("path").transition().duration(200).attr("d",hArc);
+                svg.selectAll(".arc path").style("opacity", p => p.data.name === d.data.name ? 1 : 0.5);
+                centerText.text(d.data.value);
+                centerSubText.text(d.data.name);
+            }).on("mouseout",function(e,d){
+                d3.select(this).select("path").transition().duration(200).attr("d",arc);
+                svg.selectAll(".arc path").style("opacity", 1);
+                centerText.text(total);
+                centerSubText.text("Total");
+            });
+            const legend = d3.select(legendElementId);
+            if (!legend.node()) return;
+            legend.html(""); 
+            const legendItems = legend.selectAll(".legend-item").data(data).enter().append("div").attr("class", "legend-item");
+            legendItems.append("span").attr("class", "legend-color-dot").style("background-color", d => color(d.name));
+            legendItems.append("span").text(d => d.name);
+        }
+        
+        function createScoreBarChart(data, chartElementId) {
+            const chartDiv = document.querySelector(chartElementId);
+            if (!chartDiv) return;
+            chartDiv.innerHTML = "";
+            const m = { top: 30, right: 20, bottom: 60, left: 40 },
+                w = 300 - m.left - m.right,
+                h = 250 - m.top - m.bottom;
+            const svg = d3.select(chartElementId).append("svg")
+                .attr("width", w + m.left + m.right)
+                .attr("height", h + m.top + m.bottom)
+                .append("g")
+                .attr("transform", `translate(${m.left},${m.top})`);
+            const color = d3.scaleOrdinal()
+                .domain(data.map(d => d.name))
+                .range(["#73c2fb", "#ff8c00", "#10b981", "#ffc0cb", "#9333ea", "#ef4444", "#8b5cf6"]);
+            const x = d3.scaleBand()
+                .range([0, w])
+                .domain(data.map(d => d.name))
+                .padding(0.2);
+            const y = d3.scaleLinear()
+                .range([h, 0])
+                .domain([0, 100]);
+            svg.append("g")
+                .attr("transform", `translate(0,${h})`)
+                .call(d3.axisBottom(x))
+                .selectAll("text")
+                .style("fill", "var(--text-secondary)")
+                .attr("transform", "translate(-10,0)rotate(-45)")
+                .style("text-anchor", "end");
+            svg.append("g")
+                .call(d3.axisLeft(y).ticks(5))
+                .selectAll("text")
+                .style("fill", "var(--text-secondary)");
+            svg.selectAll(".domain,.tick line").style("stroke", "var(--border-color)");
+            const bars = svg.selectAll(".bar")
+                .data(data)
+                .enter().append("rect")
+                .attr("class", "bar")
+                .attr("x", d => x(d.name))
+                .attr("y", y(0))
+                .attr("width", x.bandwidth())
+                .attr("height", 0)
+                .attr("fill", d => color(d.name))
+                .on("mouseover", function(e, d) {
+                    d3.select(this).style("filter", "brightness(1.2)").transition().duration(200).attr('y', y(d.value) - 10).attr('height', h - y(d.value) + 10);
+                    svg.append("text").attr("class", "bar-label").attr("x", x(d.name) + x.bandwidth() / 2).attr("y", y(d.value) - 15).attr("text-anchor", "middle").style("fill", "var(--text-primary)").style("font-size", "0.9rem").style("font-weight", "600").style("opacity", 0).text(d.value).transition().duration(200).style("opacity", 1);
+                })
+                .on("mouseout", function(e, d) {
+                    d3.select(this).style("filter", "brightness(1)").transition().duration(200).attr('y', y(d.value)).attr('height', h - y(d.value));
+                    svg.selectAll(".bar-label").transition().duration(200).style("opacity", 0).remove();
+                });
+            bars.transition().duration(1200).ease(d3.easeBounceOut).delay((d, i) => i * 100)
+                .attr("y", d => y(d.value)).attr("height", d => h - y(d.value));
+            bars.append("title").text(d => `${d.name}: ${d.value}`);
+        }
+
+        function createBarChart(data, elementId) { 
+            const chartDiv = document.querySelector(elementId);
+            if (!chartDiv) return;
+            chartDiv.innerHTML = ""; 
+            const m={top:30,right:20,bottom:60,left:40}, w=300-m.left-m.right, h=250-m.top-m.bottom; 
+            const svg=d3.select(elementId).append("svg").attr("width",w+m.left+m.right).attr("height",h+m.top+m.bottom).append("g").attr("transform",`translate(${m.left},${m.top})`); 
+            const x=d3.scaleBand().range([0,w]).domain(data.map(d=>d.name)).padding(0.2); 
+            const y=d3.scaleLinear().range([h,0]).domain([0,d3.max(data,d=>d.value)]); 
+            svg.append("g").attr("transform",`translate(0,${h})`).call(d3.axisBottom(x)).selectAll("text").style("fill","var(--text-secondary)").attr("transform","translate(-10,0)rotate(-45)").style("text-anchor","end"); 
+            svg.append("g").call(d3.axisLeft(y).ticks(5).tickFormat(d3.format("d"))).selectAll("text").style("fill","var(--text-secondary)"); 
+            svg.selectAll(".domain,.tick line").style("stroke","var(--border-color)"); 
+            const bars=svg.selectAll(".bar").data(data).enter().append("rect").attr("class","bar")
+                .attr("x",d=>x(d.name)).attr("y",y(0)).attr("width",x.bandwidth()).attr("height",0)
+                .attr("fill","var(--accent-color)")
+                .on("mouseover",function(e,d){
+                    d3.select(this).attr("fill","var(--accent-hover)");
+                    svg.append("text").attr("class", "bar-label").attr("x", x(d.name) + x.bandwidth() / 2).attr("y", y(d.value) - 5).attr("text-anchor", "middle").style("fill", "var(--text-primary)").style("font-size", "0.875rem").style("opacity", 0).text(d.value).transition().duration(300).style("opacity", 1);
+                })
+                .on("mouseout",function(e,d){
+                    d3.select(this).attr("fill","var(--accent-color)");
+                    svg.selectAll(".bar-label").transition().duration(300).style("opacity", 0).remove();
+                }); 
+            bars.transition().duration(1200).ease(d3.easeBounceOut).delay((d,i)=>i*100)
+                .attr("y",d=>y(d.value)).attr("height",d=>h-y(d.value)); 
+            bars.append("title").text(d=>`${d.name}: ${d.value} ${translations[currentLang].stats_labels.times}`);
+        }
+
+        function createTable(data, elementId) {
+            const tbody = document.getElementById(elementId);
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            data.forEach((item, index) => {
+                const row = document.createElement('tr');
+                row.style.opacity = '0';
+                row.style.animation = `slideUpFadeIn 0.5s ease-out ${index * 0.15 + 0.2}s forwards`;
+                row.innerHTML = `<td>${item.name}</td><td>${item.value} ${translations[currentLang].stats_labels.times}</td>`;
+                tbody.appendChild(row);
+            });
+        }
+        
+        function setupStatisticsApp() {
+            createTable(dataAhmad.hobi, "hobi-table-ahmad");
+            createTable(dataAhmad.aktivitas, "aktivitas-table-ahmad");
+            createPieChart(dataAhmad.hobi, "#pie-chart-ahmad", "#pie-legend-ahmad");
+            createBarChart(dataAhmad.aktivitas, "#bar-chart-ahmad");
+            createScoreBarChart(dataAhmad.nilaiAkademik, "#prestasi-chart-ahmad");
+            setupInteractiveCard('academic-card-ahmad', 'academic-achievement-ahmad', dataAhmad);
+            calculateAndDisplayStats(dataAhmad, {
+                avgAktivitas: 'avg-aktivitas-ahmad', 
+                modusHobi: 'modus-hobi-ahmad', 
+                persenAkademik: 'persen-akademik-ahmad',
+                nonAcademic: 'non-academic-achievement-ahmad'
+            });
+            setupAnalysisToggle('analysis-container-ahmad', 'summary-ahmad', 'prompt-ahmad', dataAhmad);
+
+            createTable(dataDawi.hobi, "hobi-table-dawi");
+            createTable(dataDawi.aktivitas, "aktivitas-table-dawi");
+            createPieChart(dataDawi.hobi, "#pie-chart-dawi", "#pie-legend-dawi");
+            createBarChart(dataDawi.aktivitas, "#bar-chart-dawi");
+            createScoreBarChart(dataDawi.nilaiAkademik, "#prestasi-chart-dawi");
+            setupInteractiveCard('academic-card-dawi', 'academic-achievement-dawi', dataDawi);
+            calculateAndDisplayStats(dataDawi, {
+                avgAktivitas: 'avg-aktivitas-dawi', 
+                modusHobi: 'modus-hobi-dawi', 
+                persenAkademik: 'persen-akademik-dawi',
+                nonAcademic: 'non-academic-achievement-dawi'
+            });
+            setupAnalysisToggle('analysis-container-dawi', 'summary-dawi', 'prompt-dawi', dataDawi);
+            
+            createTable(dataFasa.hobi, "hobi-table-fasa");
+            createTable(dataFasa.aktivitas, "aktivitas-table-fasa");
+            createPieChart(dataFasa.hobi, "#pie-chart-fasa", "#pie-legend-fasa");
+            createBarChart(dataFasa.aktivitas, "#bar-chart-fasa");
+            createScoreBarChart(dataFasa.nilaiAkademik, "#prestasi-chart-fasa");
+            setupInteractiveCard('academic-card-fasa', 'academic-achievement-fasa', dataFasa);
+            calculateAndDisplayStats(dataFasa, {
+                avgAktivitas: 'avg-aktivitas-fasa', 
+                modusHobi: 'modus-hobi-fasa', 
+                persenAkademik: 'persen-akademik-fasa',
+                nonAcademic: 'non-academic-achievement-fasa'
+            });
+            setupAnalysisToggle('analysis-container-fasa', 'summary-fasa', 'prompt-fasa', dataFasa);
+            
+            document.querySelectorAll('.tab-btn').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const pageId = event.target.getAttribute('onclick').match(/'([^']+)'/)[1];
+                    showStatsPage(pageId);
+                });
+            });
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            updateLanguage('id');
+        });
+    </script>
+</body>
+</html>
+
